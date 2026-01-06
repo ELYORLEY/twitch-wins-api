@@ -53,6 +53,12 @@ app.get("/ranking", (req, res) => {
   res.send(ranking || "Sin ranking");
 });
 
+// 🔄 RESET TOTAL
+app.get("/reset", (req, res) => {
+  fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
+  res.send("🔄 Ranking y victorias reseteadas");
+});
+
 app.listen(PORT, () => {
   console.log("API corriendo en puerto", PORT);
 });
