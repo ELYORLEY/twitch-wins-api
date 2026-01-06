@@ -1,55 +1,42 @@
 const express = require("express");
 const fs = require("fs");
+
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+const DATA_FILE = "./data.json";
 
-const DATA_FILE = "data.json";
+app.get("/", (req, res) => {
+  res.send("API Twitch Wins OK");
+});
 
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify({}));
-}
-
-function readData() {
-  return JSON.parse(fs.readFileSync(DATA_FILE));
-}
-
-function saveData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-// 🏆 SUMAR VICTORIA
 app.get("/win", (req, res) => {
   const user = req.query.user?.toLowerCase();
-  if (!user) return res.send("Falta user");
+  if (!user) return res.send("Usuario inválido");
 
-  const data = readData();
+  let data = {};
+  if (fs.existsSync(DATA_FILE)) {
+    data = JSON.parse(fs.readFileSync(DATA_FILE));
+  }
+
   data[user] = (data[user] || 0) + 1;
-  saveData(data);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
-  res.send(`🏆 ${user} ahora tiene ${data[user]} victorias`);
+  res.send(`${user} suma una victoria 🏆 (${data[user]})`);
 });
 
-// 📊 VER VICTORIAS
-app.get("/wins", (req, res) => {
-  const user = req.query.user?.toLowerCase();
-  const data = readData();
-
-  res.send(`${user} tiene ${data[user] || 0} victorias`);
-});
-
-// 🥇 RANKING
 app.get("/ranking", (req, res) => {
-  const data = readData();
+  if (!fs.existsSync(DATA_FILE)) return res.send("Sin datos");
 
+  const data = JSON.parse(fs.readFileSync(DATA_FILE));
   const ranking = Object.entries(data)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map((u, i) => `${i + 1}. ${u[0]} - ${u[1]}`)
+    .map(([u, v], i) => `${i + 1}. ${u}: ${v}`)
     .join(" | ");
 
-  res.sen(`🏆 Ranking: ${ranking}`);
+  res.send(ranking || "Sin ranking");
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("API activa"));
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
