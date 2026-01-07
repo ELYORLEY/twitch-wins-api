@@ -131,6 +131,10 @@ app.get("/reset-queue", (req, res) => {
   res.send("🔄 Cola reseteada");
 });
 
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log("API corriendo en puerto", PORT);
+  console.log("API running on port", PORT);
 });
+
+
