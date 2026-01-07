@@ -124,6 +124,13 @@ app.get("/next", (req, res) => {
   res.send(`🎮 Entra ${next} | Prepararse el siguiente`);
 });
 
+// 🔄 RESET COLA
+app.get("/reset-queue", (req, res) => {
+  const emptyQueue = { subs: [], viewers: [] };
+  fs.writeFileSync(QUEUE_FILE, JSON.stringify(emptyQueue, null, 2));
+  res.send("🔄 Cola reseteada");
+});
+
 app.listen(PORT, () => {
   console.log("API corriendo en puerto", PORT);
 });
