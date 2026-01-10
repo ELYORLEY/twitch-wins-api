@@ -130,6 +130,35 @@ app.get("/reset-queue", (req, res) => {
   res.send("🔄 Cola reseteada");
 });
 
+// ➕ SUMAR WIN
+app.get("/addwin", async (req, res) => {
+  const user = req.query.user?.toLowerCase();
+  if (!user) return res.send("Falta usuario");
+
+  const { data, sha } = await getData();
+  data[user] = (data[user] || 0) + 1;
+
+  await saveData(data, sha);
+  res.send(`🏆 Se sumó 1 win a ${user} (total ${data[user]})`);
+});
+
+// ➖ RESTAR WIN
+app.get("/removewin", async (req, res) => {
+  const user = req.query.user?.toLowerCase();
+  if (!user) return res.send("Falta usuario");
+
+  const { data, sha } = await getData();
+
+  if (!data[user] || data[user] <= 0) {
+    return res.send(`${user} no tiene wins`);
+  }
+
+  data[user] -= 1;
+  await saveData(data, sha);
+
+  res.send(`➖ Se restó 1 win a ${user} (total ${data[user]})`);
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
