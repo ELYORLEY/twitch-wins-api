@@ -130,6 +130,17 @@ app.get("/reset-queue", (req, res) => {
   res.send("🔄 Cola reseteada");
 });
 
+const DATA_FILE = "./data.json";
+
+function readData() {
+  if (!fs.existsSync(DATA_FILE)) return {};
+  return JSON.parse(fs.readFileSync(DATA_FILE));
+}
+
+function writeData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
 // ➕ SUMAR WIN
 app.get("/addwin", (req, res) => {
   const user = req.query.user?.toLowerCase();
