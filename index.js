@@ -130,44 +130,6 @@ app.get("/reset-queue", (req, res) => {
   res.send("🔄 Cola reseteada");
 });
 
-const DATA_FILE = "./data.json";
-
-function readData() {
-  if (!fs.existsSync(DATA_FILE)) return {};
-  return JSON.parse(fs.readFileSync(DATA_FILE));
-}
-
-function writeData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-// ➕ SUMAR WIN
-app.get("/addwin", (req, res) => {
-  const user = req.query.user?.toLowerCase();
-  if (!user) return res.send("Falta usuario");
-
-  const data = readData();
-  data[user] = (data[user] || 0) + 1;
-  writeData(data);
-
-  res.send(`🏆 ${user} ahora tiene ${data[user]} wins`);
-});
-
-// ➖ RESTAR WIN
-app.get("/removewin", (req, res) => {
-  const user = req.query.user?.toLowerCase();
-  if (!user) return res.send("Falta usuario");
-
-  const data = readData();
-  if (!data[user] || data[user] <= 0)
-    return res.send(`${user} no tiene wins`);
-
-  data[user]--;
-  writeData(data);
-
-  res.send(`➖ ${user} ahora tiene ${data[user]} wins`);
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
