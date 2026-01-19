@@ -4,172 +4,227 @@ const fs = require("fs");
 const app = express();
 
 // ===== ARCHIVOS =====
-const DATA_FILE = "./data.json";
+const WINS_FILE = "./wins.json";
+const GOALS_FILE = "./goals.json";
+const ASSISTS_FILE = "./assists.json";
 const QUEUE_FILE = "./queue.json";
 
 // ===== RUTA RAÍZ =====
 app.get("/", (req, res) => {
-  res.send("API Twitch OK");
+  res.send("API Twitch Ranking OK");
 });
 
-// ===== SUMAR WIN (NORMAL) =====
+// =====================
+// 🏆 WINS
+// =====================
+
 app.get("/win", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
-  let data = {};
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
-  }
+  const data = fs.existsSync(WINS_FILE)
+    ? JSON.parse(fs.readFileSync(WINS_FILE))
+    : {};
 
   data[user] = (data[user] || 0) + 1;
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(WINS_FILE, JSON.stringify(data, null, 2));
 
-  res.send(`🏆 ${user} ganó una win (total: ${data[user]})`);
+  res.send(`🏆 ${user} suma 1 win`);
 });
 
-// ===== SUMAR WIN (MODS) =====
 app.get("/addwin", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
-  let data = {};
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
-  }
+  const data = fs.existsSync(WINS_FILE)
+    ? JSON.parse(fs.readFileSync(WINS_FILE))
+    : {};
 
   data[user] = (data[user] || 0) + 1;
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(WINS_FILE, JSON.stringify(data, null, 2));
 
-  res.send(`➕ ${user} suma 1 win (total: ${data[user]})`);
+  res.send(`➕ ${user} +1 win`);
 });
 
-// ===== RESTAR WIN =====
 app.get("/removewin", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
-  let data = {};
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
-  }
+  const data = fs.existsSync(WINS_FILE)
+    ? JSON.parse(fs.readFileSync(WINS_FILE))
+    : {};
 
-  if (!data[user] || data[user] <= 0) {
+  if (!data[user] || data[user] <= 0)
     return res.send(`${user} no tiene wins`);
-  }
 
   data[user]--;
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(WINS_FILE, JSON.stringify(data, null, 2));
 
-  res.send(`➖ ${user} ahora tiene ${data[user]} wins`);
+  res.send(`➖ ${user} -1 win`);
 });
 
-// ===== VER WINS =====
-app.get("/wins", (req, res) => {
+// =====================
+// ⚽ GOLES
+// =====================
+
+app.get("/goal", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
-  let data = {};
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
-  }
+  const data = fs.existsSync(GOALS_FILE)
+    ? JSON.parse(fs.readFileSync(GOALS_FILE))
+    : {};
 
-  res.send(`🏆 ${user} tiene ${data[user] || 0} wins`);
+  data[user] = (data[user] || 0) + 1;
+  fs.writeFileSync(GOALS_FILE, JSON.stringify(data, null, 2));
+
+  res.send(`⚽ Gol para ${user}`);
 });
 
-// ===== RANKING WINS (TOP 30) =====
+// =====================
+// 🅰️ ASISTENCIAS
+// =====================
+
+app.get("/assist", (req, res) => {
+  const user = req.query.user?.toLowerCase();
+  if (!user) return res.send("Falta user");
+
+  const data = fs.existsSync(ASSISTS_FILE)
+    ? JSON.parse(fs.readFileSync(ASSISTS_FILE))
+    : {};
+
+  data[user] = (data[user] || 0) + 1;
+  fs.writeFileSync(ASSISTS_FILE, JSON.stringify(data, null, 2));
+
+  res.send(`🅰️ Asistencia para ${user}`);
+});
+
+// =====================
+// 🧮 RANKING PÚBLICO (SIN PUNTOS)
+// =====================
+
 app.get("/ranking", (req, res) => {
-  if (!fs.existsSync(DATA_FILE)) return res.send("Sin datos");
+  const wins = fs.existsSync(WINS_FILE)
+    ? JSON.parse(fs.readFileSync(WINS_FILE))
+    : {};
+  const goals = fs.existsSync(GOALS_FILE)
+    ? JSON.parse(fs.readFileSync(GOALS_FILE))
+    : {};
+  const assists = fs.existsSync(ASSISTS_FILE)
+    ? JSON.parse(fs.readFileSync(ASSISTS_FILE))
+    : {};
 
-  const data = JSON.parse(fs.readFileSync(DATA_FILE));
+  const users = new Set([
+    ...Object.keys(wins),
+    ...Object.keys(goals),
+    ...Object.keys(assists),
+  ]);
 
-  const ranking = Object.entries(data)
-    .sort((a, b) => b[1] - a[1])
+  const ranking = [...users]
+    .map(user => {
+      const w = wins[user] || 0;
+      const g = goals[user] || 0;
+      const a = assists[user] || 0;
+      const points = w * 3 + g * 2 + a;
+
+      return { user, w, g, a, points };
+    })
+    .sort((a, b) => b.points - a.points)
     .slice(0, 30)
-    .map(([u, v], i) => `${i + 1}. ${u} (${v})`)
+    .map(
+      (u, i) =>
+        `${i + 1}. ${u.user} — 🏆 ${u.w} ⚽ ${u.g} 🅰️ ${u.a}`
+    )
     .join(" | ");
 
   res.send(ranking || "Sin ranking");
 });
 
-// ===== RESET RANKING =====
-app.get("/reset", (req, res) => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
-  res.send("🔄 Ranking reseteado");
+// =====================
+// 🔒 RANKING ADMIN (CON PUNTOS)
+// =====================
+
+app.get("/ranking-admin", (req, res) => {
+  const wins = fs.existsSync(WINS_FILE)
+    ? JSON.parse(fs.readFileSync(WINS_FILE))
+    : {};
+  const goals = fs.existsSync(GOALS_FILE)
+    ? JSON.parse(fs.readFileSync(GOALS_FILE))
+    : {};
+  const assists = fs.existsSync(ASSISTS_FILE)
+    ? JSON.parse(fs.readFileSync(ASSISTS_FILE))
+    : {};
+
+  const users = new Set([
+    ...Object.keys(wins),
+    ...Object.keys(goals),
+    ...Object.keys(assists),
+  ]);
+
+  const ranking = [...users]
+    .map(user => {
+      const w = wins[user] || 0;
+      const g = goals[user] || 0;
+      const a = assists[user] || 0;
+      const points = w * 3 + g * 2 + a;
+
+      return { user, w, g, a, points };
+    })
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 30)
+    .map(
+      (u, i) =>
+        `${i + 1}. ${u.user} — 🏆 ${u.w} ⚽ ${u.g} 🅰️ ${u.a} → ${u.points} pts`
+    )
+    .join(" | ");
+
+  res.send(ranking || "Sin ranking");
 });
 
-// ===== ENTRAR A LA COLA =====
+// =====================
+// 🎮 COLA
+// =====================
+
 app.get("/play", (req, res) => {
   const user = req.query.user?.toLowerCase();
-  const isSub = req.query.sub === "1";
-
-  if (!user) return res.send("Usuario inválido");
+  if (!user) return res.send("Falta user");
 
   const queue = fs.existsSync(QUEUE_FILE)
     ? JSON.parse(fs.readFileSync(QUEUE_FILE))
-    : { subs: [], viewers: [] };
+    : [];
 
-  if (queue.subs.includes(user) || queue.viewers.includes(user)) {
-    return res.send(`${user} ya está en la cola`);
-  }
+  if (queue.includes(user))
+    return res.send(`${user} ya está en cola`);
 
-  if (isSub) {
-    queue.subs.push(user);
-    res.send(`🔴 ${user} entró a la cola SUBS`);
-  } else {
-    queue.viewers.push(user);
-    res.send(`🔵 ${user} entró a la cola`);
-  }
-
+  queue.push(user);
   fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
+
+  res.send(`🎮 ${user} entra a la cola`);
 });
 
-// ===== VER COLA =====
 app.get("/queue", (req, res) => {
-  if (!fs.existsSync(QUEUE_FILE)) {
-    return res.send("La cola está vacía");
-  }
+  const queue = fs.existsSync(QUEUE_FILE)
+    ? JSON.parse(fs.readFileSync(QUEUE_FILE))
+    : [];
 
-  const queue = JSON.parse(fs.readFileSync(QUEUE_FILE));
-  const subs = queue.subs.join(", ") || "-";
-  const viewers = queue.viewers.join(", ") || "-";
-
-  res.send(`🎮 COLA | 🔴 Subs: ${subs} | 🔵 Viewers: ${viewers}`);
+  res.send(queue.length ? `🎮 Cola: ${queue.join(", ")}` : "Cola vacía");
 });
 
-// ===== SIGUIENTE JUGADOR =====
 app.get("/next", (req, res) => {
-  if (!fs.existsSync(QUEUE_FILE)) {
-    return res.send("La cola está vacía");
-  }
+  const queue = fs.existsSync(QUEUE_FILE)
+    ? JSON.parse(fs.readFileSync(QUEUE_FILE))
+    : [];
 
-  const queue = JSON.parse(fs.readFileSync(QUEUE_FILE));
-  let next = null;
-
-  if (queue.subs.length > 0) {
-    next = queue.subs.shift();
-  } else if (queue.viewers.length > 0) {
-    next = queue.viewers.shift();
-  }
-
-  if (!next) return res.send("No hay jugadores en cola");
-
+  const next = queue.shift();
   fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
-  res.send(`➡️ Entra ${next}`);
+
+  res.send(next ? `➡️ Entra ${next}` : "Cola vacía");
 });
 
-// ===== RESET COLA =====
-app.get("/reset-queue", (req, res) => {
-  fs.writeFileSync(
-    QUEUE_FILE,
-    JSON.stringify({ subs: [], viewers: [] }, null, 2)
-  );
-  res.send("♻️ Cola reseteada");
-});
-
-// ===== SERVER =====
+// =====================
+// 🚀 SERVER
+// =====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`API running on port ${PORT}`);
+  console.log("API corriendo en puerto", PORT);
 });
-
