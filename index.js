@@ -25,17 +25,7 @@ app.get("/win", (req, res) => {
   res.send(`🏆 ${user} ahora tiene ${data[user]} victorias`);
 });
 
-// Ver victorias de un usuario ✅
-app.get("/wins", (req, res) => {
-  const user = req.query.user?.toLowerCase();
-  if (!user) return res.send("Falta user");
-
-  let data = {};
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
-  }
-
-  // ➕ SUMAR WIN (MOD)
+// 🔥 ADDWIN (MODS)
 app.get("/addwin", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
@@ -48,11 +38,11 @@ app.get("/addwin", (req, res) => {
   data[user] = (data[user] || 0) + 1;
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
-  res.send(`🏆 ${user} ahora tiene ${data[user]} wins`);
+  res.send(`➕ ${user} suma 1 win (${data[user]})`);
 });
 
-  // ➖ RESTAR WIN (MOD)
-app.get("/removewin", (req, res) => {
+// Ver victorias de un usuario ✅
+app.get("/wins", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
@@ -60,19 +50,6 @@ app.get("/removewin", (req, res) => {
   if (fs.existsSync(DATA_FILE)) {
     data = JSON.parse(fs.readFileSync(DATA_FILE));
   }
-
-  if (!data[user] || data[user] <= 0) {
-    return res.send(`${user} no tiene wins`);
-  }
-
-  data[user]--;
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-
-  res.send(`➖ ${user} ahora tiene ${data[user]} wins`);
-});
-
-  res.send(`🏆 ${user} tiene ${data[user] || 0} victorias`);
-});
 
 // Ranking
 app.get("/ranking", (req, res) => {
