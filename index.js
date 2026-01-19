@@ -222,6 +222,22 @@ app.get("/next", (req, res) => {
 });
 
 // =====================
+// 🔄 RESETS
+// =====================
+
+app.get("/reset-ranking", (req, res) => {
+  fs.writeFileSync(WINS_FILE, JSON.stringify({}, null, 2));
+  fs.writeFileSync(GOALS_FILE, JSON.stringify({}, null, 2));
+  fs.writeFileSync(ASSISTS_FILE, JSON.stringify({}, null, 2));
+  res.send("🔄 Ranking total reseteado");
+});
+
+app.get("/reset-queue", (req, res) => {
+  fs.writeFileSync(QUEUE_FILE, JSON.stringify([], null, 2));
+  res.send("♻️ Cola reseteada");
+});
+
+// =====================
 // 🚀 SERVER
 // =====================
 const PORT = process.env.PORT || 3000;
