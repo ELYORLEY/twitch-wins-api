@@ -166,7 +166,7 @@ app.get("/ranking-admin", (req, res) => {
       const w = wins[user] || 0;
       const g = goals[user] || 0;
       const a = assists[user] || 0;
-      const points = w * 1 + g * 0 + a;
+      const points = w * 1 + g * 0 + a * 0;
 
       return { user, w, g, a, points };
     })
