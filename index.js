@@ -125,12 +125,12 @@ app.get("/ranking", (req, res) => {
       const w = wins[user] || 0;
       const g = goals[user] || 0;
       const a = assists[user] || 0;
-      const points = w * 3 + g * 2 + a;
+      const points = w * 1 + g * 0 + a;
 
       return { user, w, g, a, points };
     })
     .sort((a, b) => b.points - a.points)
-    .slice(0, 30)
+    .slice(0, 10)
     .map(
       (u, i) =>
         `${i + 1}. ${u.user} — 🏆 ${u.w} ⚽ ${u.g} 🅰️ ${u.a}`
@@ -166,12 +166,12 @@ app.get("/ranking-admin", (req, res) => {
       const w = wins[user] || 0;
       const g = goals[user] || 0;
       const a = assists[user] || 0;
-      const points = w * 3 + g * 2 + a;
+      const points = w * 1 + g * 0 + a;
 
       return { user, w, g, a, points };
     })
     .sort((a, b) => b.points - a.points)
-    .slice(0, 30)
+    .slice(0, 10)
     .map(
       (u, i) =>
         `${i + 1}. ${u.user} — 🏆 ${u.w} ⚽ ${u.g} 🅰️ ${u.a} → ${u.points} pts`
