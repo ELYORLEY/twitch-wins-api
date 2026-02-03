@@ -189,12 +189,20 @@ app.get("/play", (req, res) => {
   const user = req.query.user?.toLowerCase();
   if (!user) return res.send("Falta user");
 
-  const queue = fs.existsSync(QUEUE_FILE)
-    ? JSON.parse(fs.readFileSync(QUEUE_FILE))
-    : [];
+  let queue = [];
 
-  if (queue.includes(user))
+  if (fs.existsSync(QUEUE_FILE)) {
+    try {
+      queue = JSON.parse(fs.readFileSync(QUEUE_FILE));
+      if (!Array.isArray(queue)) queue = [];
+    } catch {
+      queue = [];
+    }
+  }
+
+  if (queue.includes(user)) {
     return res.send(`${user} ya está en cola`);
+  }
 
   queue.push(user);
   fs.writeFileSync(QUEUE_FILE, JSON.stringify(queue, null, 2));
